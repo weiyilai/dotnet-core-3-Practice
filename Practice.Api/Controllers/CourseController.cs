@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Practice.Api.ApiModels;
 using Practice.Core.Entities;
 using Practice.SharedKernel.Interfaces;
-using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -35,7 +33,7 @@ namespace Practice.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var entity = await _courseRepository.GetAllAsync<Course>();
+            List<Course> entity = await _courseRepository.GetAllAsync<Course>();
             return Ok(entity.Select(CourseDTO.FromCourse));
         }
 
@@ -51,14 +49,14 @@ namespace Practice.Api.Controllers
         [ProducesDefaultResponseType]
         public async Task<IActionResult> Get(int id)
         {
-            var t = await _courseRepository.GetSingleAsync<Course>(t => t.CourseID == id);
+            CourseDTO course = CourseDTO.FromCourse(await _courseRepository.GetSingleAsync<Course>(t => t.CourseID == id));
 
-            if (t == null)
+            if (course == null)
             {
                 return NotFound();
             }
 
-            return Ok(CourseDTO.FromCourse(t));
+            return Ok(course);
         }
 
         // POST api/<CourseController>
@@ -72,14 +70,14 @@ namespace Practice.Api.Controllers
         [ProducesDefaultResponseType]
         public IActionResult Post([FromBody] CourseDTO course)
         {
-            var t = new Course()
+            Course model = new Course()
             {
                 Title = course.Title,
                 Credits = 1,
                 DepartmentID = 1
             };
-            _courseRepository.Add<Course>(t);
-            return CreatedAtAction(nameof(Get), new { id = t.CourseID }, t);
+            _courseRepository.Add(model);
+            return CreatedAtAction(nameof(Get), new { id = model.CourseID }, model);
         }
 
         // PUT api/<CourseController>/5
@@ -94,10 +92,10 @@ namespace Practice.Api.Controllers
         [ProducesDefaultResponseType]
         public async Task<IActionResult> Put(int id, [FromBody] CourseDTO course)
         {
-            var t = await _courseRepository.GetSingleAsync<Course>(t => t.CourseID == id);
-            t.Title = course.Title;
-            t.Credits = course.Credits;
-            _courseRepository.Update<Course>(t);
+            Course model = await _courseRepository.GetSingleAsync<Course>(t => t.CourseID == id);
+            model.Title = course.Title;
+            model.Credits = course.Credits;
+            _courseRepository.Update(model);
 
             return NoContent();
         }
@@ -113,8 +111,8 @@ namespace Practice.Api.Controllers
         [ProducesDefaultResponseType]
         public async Task<IActionResult> Delete(int id)
         {
-            var t = await _courseRepository.GetSingleAsync<Course>(t => t.CourseID == id);
-            _courseRepository.Delete<Course>(t);
+            Course model = await _courseRepository.GetSingleAsync<Course>(t => t.CourseID == id);
+            _courseRepository.Delete(model);
 
             return NoContent();
         }
